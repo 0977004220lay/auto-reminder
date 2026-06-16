@@ -1,9 +1,5 @@
 import streamlit as st
 import schedule
-import os
-import time
-os.environ['TZ'] = 'Asia/Phnom_Penh'
-time.tzset()
 import time
 import threading
 import requests
