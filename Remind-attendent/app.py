@@ -21,7 +21,7 @@ def delete_message(token, chat_id, message_id):
     except Exception as e:
         print(f"មានបញ្ហាក្នុងការលុបសារ: {e}")
 
-# ----------------- អនុគមន៍ផ្ញើសារ (កែប្រែឲ្យចេះលុបវិញ) -----------------
+# ----------------- អនុគមន៍ផ្ញើសារ (មានមុខងារ Pin និងលុបវិញ) -----------------
 def send_telegram_message(token, chat_id, text):
     try:
         url = f"https://api.telegram.org/bot{token}/sendMessage"
@@ -34,10 +34,24 @@ def send_telegram_message(token, chat_id, text):
             # ចាប់យកលេខ ID របស់សារដែលទើបតែផ្ញើចេញ
             res_data = response.json()
             message_id = res_data['result']['message_id']
+
+            # --- មុខងារថ្មី៖ ខ្ទាស់សារ (Pin Message) ឲ្យលោតរោទ៍ខ្លាំងៗ ---
+            try:
+                pin_url = f"https://api.telegram.org/bot{token}/pinChatMessage"
+                # disable_notification=False គឺដើម្បីបញ្ជាឲ្យវាលោតរោទ៍ទោះជាគេ Mute គ្រុបក៏ដោយ
+                pin_data = {
+                    "chat_id": chat_id, 
+                    "message_id": message_id, 
+                    "disable_notification": False 
+                }
+                requests.post(pin_url, data=pin_data)
+            except Exception as pin_err:
+                print(f"មានបញ្ហាក្នុងការ Pin សារ: {pin_err}")
+            # -----------------------------------------------------
             
             # កំណត់ម៉ោងរង់ចាំដើម្បីលុប (គិតជាវិនាទី)
-            # លោកគ្រូអាចកែលេខ 60 នេះបាន (ឧទាហរណ៍៖ ៦០ = ១ នាទី, ៩០០ = ១៥ នាទី, ៣៦០០ = ១ ម៉ោង)
-            wait_time = 900
+            # ៣៦០០ វិនាទី = ១ ម៉ោង (ទុកឲ្យគេឃើញសារ Pin នេះបាន ១ ម៉ោងសិន សឹមលុបចោល)
+            wait_time = 60 
             
             # បញ្ជាឲ្យកូនចៅម្នាក់ទៀតចាំរាប់ម៉ោង រួចលុបសារនោះចោល
             timer = threading.Timer(wait_time, delete_message, args=[token, chat_id, message_id])
@@ -63,9 +77,8 @@ if 'thread_started' not in st.session_state:
 # ----------------- ផ្ទាំងគ្រប់គ្រង (UI) -----------------
 st.header("⚙️ កំណត់ព័ត៌មាន Telegram")
 
-# លេខកូដ និង Chat ID ត្រូវបានចាក់សោរទុកជាមុន មិនបាច់វាយបញ្ចូលទៀតទេ
 bot_token = st.text_input("Bot Token:", value="8037667434:AAGDSRYkpzYK96Jxmh613y4YI9KOYDwgUQU")
-chat_id = st.text_input("Chat ID (លេខគ្រុប ឬ លេខបុគ្គល):", value="-1002706061510")
+chat_id = st.text_input("Chat ID (លេខគ្រុប ឬ លេខបុគ្គល):", value="-1004192247028")
 message_text = st.text_area("សារដែលត្រូវផ្ញើ:", "សួស្តីលោកគ្រូអ្នកគ្រូ! ⏰ សូមកុំភ្លេចចូលទៅចុះវត្តមានសិស្សសម្រាប់ម៉ោងនេះផងណា៎! សូមអរគុណ។")
 
 st.header("⏱️ កំណត់ម៉ោងរំលឹក")
@@ -90,13 +103,11 @@ if st.button("▶️ រក្សាទុក និង ចាប់ផ្តើ
     if not bot_token or not chat_id or not message_text:
         st.error("សូមបំពេញ Bot Token, Chat ID និង សារឲ្យបានត្រឹមត្រូវសិន!")
     else:
-        # រក្សាទុកម៉ោងថ្មី
         st.session_state.alert_times = new_times
         
-        # លុបចោលការចាំម៉ោងចាស់ រួចបញ្ចូលម៉ោងថ្មី
         schedule.clear()
         for t in new_times:
             schedule.every().day.at(t).do(send_telegram_message, bot_token, chat_id, message_text)
             
-        st.success(f"✅ ប្រព័ន្ធកំពុងដំណើរការ! វានឹងលួចផ្ញើសារជារៀងរាល់ថ្ងៃនៅម៉ោង៖ {', '.join(new_times)} ហើយវានឹងលុបសារខ្លួនឯងវិញដោយស្វ័យប្រវត្តិ។")
+        st.success(f"✅ ប្រព័ន្ធកំពុងដំណើរការ! វានឹងលួចផ្ញើនិង Pin សារជារៀងរាល់ថ្ងៃនៅម៉ោង៖ {', '.join(new_times)} (ហើយនឹងលុបចេញវិញក្រោយ ១ ម៉ោង)។")
         st.balloons()
