@@ -31,11 +31,9 @@ def send_telegram_message(token, chat_id, text):
         if response.status_code == 200:
             print(f"[{datetime.datetime.now()}] សារបានផ្ញើជោគជ័យ!")
             
-            # ចាប់យកលេខ ID របស់សារដែលទើបតែផ្ញើចេញ
             res_data = response.json()
             message_id = res_data['result']['message_id']
 
-            # --- មុខងារ៖ ខ្ទាស់សារ (Pin Message) ឲ្យលោតរោទ៍ខ្លាំងៗ ---
             try:
                 pin_url = f"https://api.telegram.org/bot{token}/pinChatMessage"
                 pin_data = {
@@ -47,10 +45,8 @@ def send_telegram_message(token, chat_id, text):
             except Exception as pin_err:
                 print(f"មានបញ្ហាក្នុងការ Pin សារ: {pin_err}")
             
-            # កំណត់ម៉ោងរង់ចាំដើម្បីលុប: ៩០០ វិនាទី = ១៥ នាទី
-            wait_time = 900 
-            
-            # បញ្ជាឲ្យកូនចៅម្នាក់ទៀតចាំរាប់ម៉ោង រួចលុបសារនោះចោល
+            # កំណត់ម៉ោងលុបសារ (តេស្តត្រឹម ៦០ វិនាទីសិន ដើម្បីងាយមើល)
+            wait_time = 60 
             timer = threading.Timer(wait_time, delete_message, args=[token, chat_id, message_id])
             timer.start()
             
@@ -63,9 +59,8 @@ def send_telegram_message(token, chat_id, text):
 def run_scheduler():
     while True:
         schedule.run_pending()
-        time.sleep(1) # សម្រាក 1 វិនាទី សឹមឆែកម៉ោងម្តងទៀត
+        time.sleep(1)
 
-# បើកខួរក្បាលទី២ (Thread) ឲ្យចាំមើលម៉ោង តែបើកម្តងគត់កុំឲ្យជាន់គ្នា
 if 'thread_started' not in st.session_state:
     t = threading.Thread(target=run_scheduler, daemon=True)
     t.start()
@@ -78,14 +73,24 @@ bot_token = st.text_input("Bot Token:", value="8037667434:AAGDSRYkpzYK96Jxmh613y
 chat_id = st.text_input("Chat ID (លេខគ្រុប ឬ លេខបុគ្គល):", value="-1004192247028")
 message_text = st.text_area("សារដែលត្រូវផ្ញើ:", "សួស្តីលោកគ្រូអ្នកគ្រូ! ⏰ សូមកុំភ្លេចចូលទៅចុះវត្តមានសិស្សសម្រាប់ម៉ោងនេះផងណា៎! សូមអរគុណ។")
 
+# === ផ្នែកថ្មី៖ ប៊ូតុងតេស្តបាញ់សារភ្លាមៗ ===
+st.divider()
+st.subheader("🛠️ ផ្នែកសាកល្បងប្រព័ន្ធ (Test System)")
+if st.button("🚀 សាកល្បងបាញ់សារចូលគ្រុបឥឡូវនេះ (Test Now)"):
+    if not bot_token or not chat_id:
+        st.error("សូមបំពេញ Token និង Chat ID សិន!")
+    else:
+        st.info("កំពុងបញ្ជូនសារទៅកាន់ Telegram...")
+        send_telegram_message(bot_token, chat_id, "នេះគឺជាសារតេស្តសាកល្បងពីប្រព័ន្ធ! វានឹងលុបទៅវិញក្នុងរយៈពេល ៦០វិនាទី។")
+        st.success("ការបញ្ជាបានបញ្ជូនរួចរាល់! សូមឆែកមើលក្នុងគ្រុប Telegram ឥឡូវនេះ។")
+# =================================
+
 st.header("⏱️ កំណត់ម៉ោងរំលឹក")
 st.info("💡 ងាយស្រួលជាងមុន! លោកគ្រូគ្រាន់តែវាយបញ្ចូល **ម៉ោងនៅកម្ពុជា** ផ្ទាល់តែម្តង (ប្រព័ន្ធនឹងគណនាដក ៧ ម៉ោងឲ្យដោយស្វ័យប្រវត្តិ)។")
 
-# រៀបចំកន្លែងផ្ទុកម៉ោងដើម (លើកនេះដាក់ម៉ោងខ្មែរពិតប្រាកដតែម្តង លែងបាច់ដកលេខទៀតហើយ)
 if 'alert_times' not in st.session_state:
     st.session_state.alert_times = ["06:50", "07:00", "07:15", "10:55"]
 
-# បង្ហាញប្រអប់ឲ្យកែម៉ោង
 cols = st.columns(4)
 new_times = []
 for i in range(4):
@@ -95,7 +100,6 @@ for i in range(4):
 
 st.divider()
 
-# អនុគមន៍បំលែងម៉ោងខ្មែរ ទៅជាម៉ោង Server (លួចដក ៧ ម៉ោង)
 def khmer_to_utc(khmer_time_str):
     try:
         h, m = map(int, khmer_time_str.split(':'))
@@ -104,7 +108,6 @@ def khmer_to_utc(khmer_time_str):
     except:
         return khmer_time_str
 
-# ប៊ូតុងសម្រាប់រក្សាទុកការកំណត់
 if st.button("▶️ រក្សាទុក និង ចាប់ផ្តើមឲ្យប្រព័ន្ធចាំម៉ោងរត់", use_container_width=True):
     if not bot_token or not chat_id or not message_text:
         st.error("សូមបំពេញ Bot Token, Chat ID និង សារឲ្យបានត្រឹមត្រូវសិន!")
@@ -112,10 +115,9 @@ if st.button("▶️ រក្សាទុក និង ចាប់ផ្តើ
         st.session_state.alert_times = new_times
         schedule.clear()
         
-        # យកម៉ោងដែលលោកគ្រូវាយបញ្ចូល ទៅបំលែងដក៧សិនមុននឹងឲ្យប្រព័ន្ធរាប់
         for t in new_times:
             server_time = khmer_to_utc(t)
             schedule.every().day.at(server_time).do(send_telegram_message, bot_token, chat_id, message_text)
             
-        st.success(f"✅ ប្រព័ន្ធកំពុងដំណើរការ! វានឹងលួចផ្ញើនិង Pin សារជារៀងរាល់ថ្ងៃនៅម៉ោងកម្ពុជា៖ {', '.join(new_times)} (ហើយនឹងលុបចេញវិញក្រោយ ១៥ នាទី)។")
+        st.success(f"✅ ប្រព័ន្ធកំពុងដំណើរការ! វានឹងលួចផ្ញើនិង Pin សារជារៀងរាល់ថ្ងៃនៅម៉ោងកម្ពុជា៖ {', '.join(new_times)}")
         st.balloons()
