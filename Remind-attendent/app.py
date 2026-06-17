@@ -37,7 +37,7 @@ def send_telegram_message(token, chat_id, text):
             
             # កំណត់ម៉ោងរង់ចាំដើម្បីលុប (គិតជាវិនាទី)
             # លោកគ្រូអាចកែលេខ 60 នេះបាន (ឧទាហរណ៍៖ ៦០ = ១ នាទី, ៩០០ = ១៥ នាទី, ៣៦០០ = ១ ម៉ោង)
-            wait_time = 60 
+            wait_time = 900
             
             # បញ្ជាឲ្យកូនចៅម្នាក់ទៀតចាំរាប់ម៉ោង រួចលុបសារនោះចោល
             timer = threading.Timer(wait_time, delete_message, args=[token, chat_id, message_id])
@@ -65,7 +65,7 @@ st.header("⚙️ កំណត់ព័ត៌មាន Telegram")
 
 # លេខកូដ និង Chat ID ត្រូវបានចាក់សោរទុកជាមុន មិនបាច់វាយបញ្ចូលទៀតទេ
 bot_token = st.text_input("Bot Token:", value="8037667434:AAGDSRYkpzYK96Jxmh613y4YI9KOYDwgUQU")
-chat_id = st.text_input("Chat ID (លេខគ្រុប ឬ លេខបុគ្គល):", value="-2706061510")
+chat_id = st.text_input("Chat ID (លេខគ្រុប ឬ លេខបុគ្គល):", value="-1002706061510")
 message_text = st.text_area("សារដែលត្រូវផ្ញើ:", "សួស្តីលោកគ្រូអ្នកគ្រូ! ⏰ សូមកុំភ្លេចចូលទៅចុះវត្តមានសិស្សសម្រាប់ម៉ោងនេះផងណា៎! សូមអរគុណ។")
 
 st.header("⏱️ កំណត់ម៉ោងរំលឹក")
